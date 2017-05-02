@@ -80,6 +80,7 @@
 * docker with jenkins
 * docker with mysql
 * docker with dnsserver(dnsmasq)
+* docker with java and mvn. (免去前端另外开启eclipse)
 * more...
 
 
