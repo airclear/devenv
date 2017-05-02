@@ -1,6 +1,6 @@
 # 用docker解决几个问题
 
-### 遇到的问题：
+## 遇到的问题：
 
 * Grape
 	* 安装运行环境繁琐困难，都要找后端帮忙
@@ -13,7 +13,7 @@
 	
 * 文件路径问题，用户权限问题困扰前端、QA和部分后端同学，windows平台最为严重
 
-### 解决方案:
+## 解决方案:
 
 让软件运行在统一的环境：docker
 
@@ -21,9 +21,9 @@
 * 使用docker封装Python运行环境，在任意平台使用镜像启动环境。剩下的就和之前一样，用编辑器修改代码，保存，pytohn自动重启程序，就能看到新效果。
 
 
-### 开始使用：
+## 开始使用：
 
-#### 安装docker
+### 安装docker
 
 
 | 平台 | 地址 |
@@ -32,14 +32,14 @@
 | WINDOWS | https://docs.docker.com/docker-for-windows/install/  |
 | UBUNTU | https://docs.docker.com/engine/installation/linux/ubuntu/#install-using-the-repository  |
 
-#### 用docker跑grape项目
+### 用docker跑grape项目
 
 1. 更新源代码，merge主分支`r`
 2. 运行`docker-compose up`
 3. enjoy it.
 
 
-#### 用docker跑Nginx
+### 用docker跑Nginx
 
 
 1. 下载或者clone本项目
@@ -76,7 +76,7 @@
 6. 类Unix系统执行`chmod u+x bin/run-zaozuo.sh`，并运行 `./bin/run-zaozuo.sh`启动即可。Windows系统直接双击运行`bin/run-zaozuo.bat`
 
 
-#### 更多
+## 更多
 
 * docker with jenkins
 * docker with mysql
