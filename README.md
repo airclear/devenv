@@ -42,10 +42,11 @@
 #### 用docker跑Nginx
 
 
-1. 下载解压软件目录：
+1. 下载或者clone本项目
 2. 目录说明
 
 	```
+	把软件、配置文件、数据都放在同一个目录里，方便管理和迁移
 	.
 	├── Dockerfile	//docker镜像build文件，使用者忽略
 	├── README.md
