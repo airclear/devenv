@@ -1,0 +1,11 @@
+[mysqld]
+
+log-bin=mysql-bin
+binlog-format=ROW
+
+server_id=1
+
+sql_mode= 
+
+#  Got a packet bigger than 'max_allowed_packet' bytes
+max_allowed_packet = 20M
