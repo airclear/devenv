@@ -1,0 +1,74 @@
+server {
+    listen       80;
+    server_name  zaozuo.com api.zaozuo.com static.zaozuo.com;
+
+    #charset koi8-r;
+    access_log  /data/nginx/logs/host.access.log  main;
+
+    root       /data/nginx/html/zaozuo;
+
+    location / {
+        proxy_pass http://hostip:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Request-Id $pid-$msec-$remote_addr-$request_length;
+        proxy_redirect off;
+        client_max_body_size  100m;
+    }
+
+    location ~* /static/ {
+        concat on;
+        concat_max_files 30;
+        concat_types text/css application/javascript;
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /data/nginx/html;
+    }
+}
+
+
+server {
+    listen       443;
+    server_name  zaozuo.com api.zaozuo.com static.zaozuo.com;
+
+    root /data/nginx/html/zaozuo;
+
+    ssl on;
+    ssl_certificate /data/nginx/conf/cert/zaozuo.cer;
+    ssl_certificate_key /data/nginx/conf/cert/zaozuo.key;
+    ssl_session_timeout 5m;
+    ssl_protocols SSLv2 SSLv3 TLSv1;
+    ssl_ciphers ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;
+    ssl_prefer_server_ciphers on;
+
+    location / {
+        proxy_pass      http://hostip:8080;
+        proxy_redirect  off;
+        proxy_set_header        Host            $host;
+        proxy_set_header        X-Real-IP       $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header '_protocol' 'https';
+    }
+
+    #css文件和js文件合并的相关配置,~*表示不区分大小写匹配
+    location ~* /static/ {
+        sendfile off;
+        concat on;
+        concat_max_files 30;
+        concat_types text/css text/html application/javascript;
+        add_header 'Access-Control-Allow-Origin' "*";
+        add_header 'Access-Control-Allow-Credentials' "true";
+        add_header 'Access-Control-Max-Age' 86400;
+        add_header 'Access-Control-Allow-Methods' 'GET';
+        add_header 'Access-Control-Allow-Headers' 'reqid, nid, host, x-real-ip, x-forwarded-ip, event-type, event-id, accept, content-type, Authorization, X-Requested-With';
+        expires       5d;
+    }
+
+}
