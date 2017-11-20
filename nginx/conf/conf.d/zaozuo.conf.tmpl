@@ -1,65 +1,147 @@
+# zaozuo.com.cn重定向到zaozuo.com; cn域名无443
 server {
     listen       80;
-    server_name  zaozuo.com api.zaozuo.com static.zaozuo.com;
-
-    #charset koi8-r;
-    access_log  /data/nginx/logs/host.access.log  main;
-
-    root       /data/nginx/html/zaozuo;
-
-    location / {
-        proxy_pass http://hostip:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Request-Id $pid-$msec-$remote_addr-$request_length;
-        proxy_redirect off;
-        client_max_body_size  100m;
-    }
-
-    location ~* /static/ {
-        concat on;
-        concat_max_files 30;
-        concat_types text/css application/javascript;
-    }
-
-    #error_page  404              /404.html;
-
-    # redirect server error pages to the static page /50x.html
-    #
-    error_page   500 502 503 504  /50x.html;
-    location = /50x.html {
-        root   /data/nginx/html;
+    server_name  www.zaozuo.com.cn zaozuo.com.cn m.zaozuo.com.cn login.zaozuo.com.cn;
+    if ($host ~* (.*)\.cn) {
+      set $host_without_cn $1;
+      rewrite ^(.*)$ https://$host_without_cn$1 redirect;
     }
 }
 
-
+# http重定向到https
 server {
-    listen       443;
-    server_name  zaozuo.com api.zaozuo.com static.zaozuo.com;
+    listen       80;
+    server_name  www.zaozuo.com m.zaozuo.com login.zaozuo.com;
+    rewrite ^(.*)$  https://$host$1 redirect;
+}
 
-    root /data/nginx/html/zaozuo;
+# 回调地址兼容alipay、wxapay
+server {
+    listen       80;
+    listen       443;
+    server_name  zaozuo.com test.zaozuo.com api.zaozuo.com;
+
+    set $allow_path 0;
+    if ( $request_uri ~* '/(alipay|wxpay)/' ) {
+        set $allow_path 1;
+    }
+    if ($http_cookie ~* 'X-client=app') {
+        set $allow_path 1;
+    }
+    if ($request_method = POST) {
+        set $allow_path 1;
+    }
+
+    if ($allow_path = 0) {
+        rewrite ^(.*)$ https://www.zaozuo.com$1 redirect;
+    }
 
     ssl on;
     ssl_certificate /data/nginx/conf/cert/zaozuo.cer;
     ssl_certificate_key /data/nginx/conf/cert/zaozuo.key;
     ssl_session_timeout 5m;
-    ssl_protocols SSLv2 SSLv3 TLSv1;
+    #ssl_protocols SSLv2 SSLv3 TLSv1;
     ssl_ciphers ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;
     ssl_prefer_server_ciphers on;
 
     location / {
-        proxy_pass      http://hostip:8080;
-        proxy_redirect  off;
-        proxy_set_header        Host            $host;
-        proxy_set_header        X-Real-IP       $remote_addr;
-        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header '_protocol' 'https';
+        proxy_pass          http://hostip:8080;
+        proxy_redirect      off;
+        proxy_set_header    Host                $host;
+        proxy_set_header    X-Real-IP           $remote_addr;
+        proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
+        proxy_set_header    X-Request-Id        $pid-$msec-$remote_addr-$request_length;
+        proxy_set_header    X-Forwarded-Proto   $scheme;
+        proxy_set_header    '_protocol'         'https';
     }
 
-    #css文件和js文件合并的相关配置,~*表示不区分大小写匹配
+}
+
+
+# https
+server {
+    listen       443;
+
+    server_name  www.zaozuo.com m.zaozuo.com api.zaozuo.com login.zaozuo.com;
+
+    set $flag '';
+    set $is_mobile 0;
+    set $forcemobile '';
+
+    # ua from: http://detectmobilebrowsers.com/mobile
+    if ($http_user_agent ~* "(android|bb\d+|meego).+mobile|windows phone|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino") {
+        set $is_mobile 1;
+    }
+
+    if ($host != 'm.zaozuo.com'){
+        set $flag '${flag}1';
+    }
+    if ($host = 'm.zaozuo.com'){
+        set $flag '-';
+        set $forcemobile 'true';
+    }
+    if ($is_mobile = 1){
+        set $flag '${flag}1';
+    }
+    if ($is_mobile = 0){
+        set $flag '${flag}0';
+    }
+    if ($host ~* 'api.zaozuo.com|login.zaozuo.com'){
+        set $flag '-';
+    }
+    if ($http_cookie ~* 'X-Client=app') {
+        set $flag '-';
+    }
+    # 移动端跳转m.zaozuo.com
+    if ($flag = '11'){
+        rewrite ^(.*)$ https://m.zaozuo.com$1 redirect;
+    }
+    # 非移动端访问m.zaozuo.com跳转到zaozuo.com
+    if ($flag = '00'){
+        rewrite ^(.*)$ https://www.zaozuo.com$1 redirect;
+    }
+
+
+    ssl on;
+    ssl_certificate /data/nginx/conf/cert/zaozuo.cer;
+    ssl_certificate_key /data/nginx/conf/cert/zaozuo.key;
+    ssl_session_timeout 5m;
+    #ssl_protocols SSLv2 SSLv3 TLSv1;
+    ssl_ciphers ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;
+    ssl_prefer_server_ciphers on;
+
+    location / {
+        proxy_pass          http://hostip:8080;
+        proxy_redirect      off;
+        proxy_set_header    Host                $host;
+        proxy_set_header    X-Real-IP           $remote_addr;
+        proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
+        proxy_set_header    X-Request-Id        $pid-$msec-$remote_addr-$request_length;
+        proxy_set_header    X-Forwarded-Proto   $scheme;
+        proxy_set_header    '_protocol'         'https';
+        proxy_set_header    '_forcemobile'      $forcemobile;
+    }
+}
+
+
+# https static
+server {
+    listen       80;
+    listen       443;
+    server_name  static.zaozuo.com css.zaozuo.com;
+
+    ssl on;
+    ssl_certificate /data/nginx/conf/cert/zaozuo.cer;
+    ssl_certificate_key /data/nginx/conf/cert/zaozuo.key;
+    ssl_session_timeout 5m;
+    #ssl_protocols SSLv2 SSLv3 TLSv1;
+    ssl_ciphers ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;
+    ssl_prefer_server_ciphers on;
+
     location ~* /static/ {
+        root       /data/nginx/html/zaozuo;
         sendfile off;
+        expires 5d;
         concat on;
         concat_max_files 30;
         concat_types text/css text/html application/javascript;
@@ -68,7 +150,5 @@ server {
         add_header 'Access-Control-Max-Age' 86400;
         add_header 'Access-Control-Allow-Methods' 'GET';
         add_header 'Access-Control-Allow-Headers' 'reqid, nid, host, x-real-ip, x-forwarded-ip, event-type, event-id, accept, content-type, Authorization, X-Requested-With';
-        expires       5d;
     }
-
 }
