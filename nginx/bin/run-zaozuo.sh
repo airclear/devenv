@@ -20,6 +20,7 @@ DIR="$( cd -P "$( dirname "$SOURCE"  )" && pwd  )"
 rm -f ${DIR}/../conf/conf.d/zaozuo.conf
 cp ${DIR}/../conf/conf.d/zaozuo.conf.tmpl ${DIR}/../conf/conf.d/zaozuo.conf
 sed -i '' "s/hostip/${localip}/g" ${DIR}/../conf/conf.d/zaozuo.conf
+sed -i '' "s/dockerhost/${localip}/g" ${DIR}/../conf/conf.d/zaozuo.conf
 
 
 docker run -d -p 80:80 -p 443:443 \
